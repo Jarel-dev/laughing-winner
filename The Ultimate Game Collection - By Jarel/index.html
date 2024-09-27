@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ultimate Game Collection</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #111;
+            color: white;
+            text-align: center;
+            margin: 0;
+            padding: 20px;
+        }
+        #donation-section {
+            margin-bottom: 20px;
+        }
+        #donate-button {
+            padding: 15px 30px;
+            font-size: 20px;
+            background-color: #28a745;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        #donate-button:hover {
+            background-color: #218838;
+        }
+        .game {
+            position: relative;
+            width: 640px;
+            height: 480px;
+            border: 2px solid white;
+            overflow: hidden;
+            background: #333;
+            margin: auto;
+            display: none; /* Hidden by default */
+        }
+        #player1, #npc, #player {
+            position: absolute;
+            width: 20px;
+            height: 80px;
+            background-color: blue;
+            left: 10px;
+        }
+        #ball {
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            background-color: red;
+            border-radius: 50%; /* Make it a circle */
+            left: 310px;
+            top: 230px; /* Center the ball */
+        }
+        #game-over, #game-over-chase {
+            display: none;
+            font-size: 30px;
+            color: red;
+            margin-top: 20px;
+        }
+        #npc {
+            background-color: green;
+            width: 30px;
+            height: 30px;
+        }
+    </style>
+</head>
+<body>
+    <div id="donation-section">
+        <h1>Support My Projects!</h1>
+        <p>Donate me so I can make more games/websites for you to enjoy!</p>
+        <select id="donation-amount">
+            <option value="5">Donate $5</option>
+            <option value="10">Donate $10</option>
+            <option value="20">Donate $20</option>
+            <option value="50">Donate $50</option>
+            <option value="100">Donate $100</option>
+        </select>
+        <br>
+        <button id="donate-button" onclick="donate()">Donate Me</button>
+    </div>
+
+    <div>
+        <label for="color-select">Choose Paddle Color:</label>
+        <select id="color-select" onchange="changePaddleColor()">
+            <option value="blue">Blue</option>
+            <option value="yellow">Yellow</option>
+            <option value="red">Red</option>
+            <option value="pink">Pink</option>
+            <option value="orange">Orange</option>
+            <option value="green">Green</option>
+            <option value="rainbow">Rainbow</option>
+        </select>
+    </div>
+
+    <div id="pong-game" class="game">
+        <h2>Pong Game</h2>
+        <div id="player1"></div>
+        <div id="ball"></div>
+        <div id="game-over">Game Over!</div>
+    </div>
+
+    <div id="chase-game" class="game">
+        <h2>Chase Game</h2>
+        <div id="player" style="width: 20px; height: 20px; background-color: blue; position: absolute;"></div>
+        <div id="npc"></div>
+        <div id="game-over-chase" style="display: none; font-size: 30px; color: red;">Game Over!</div>
+    </div>
+
+    <button onclick="startPongGame()">Start Pong Game</button>
+    <button onclick="startChaseGame()">Start Chase Game</button>
+
+    <script>
+        function donate() {
+            const amount = document.getElementById('donation-amount').value;
+            const donationUrl = `https://www.paypal.com/donate?hosted_button_id=YOUR_BUTTON_ID&amount=${amount}`;
+            window.open(donationUrl, '_blank');
+        }
+
+        // Pong Game
+        const player1 = document.getElementById('player1');
+        const ball = document.getElementById('ball');
+        const gameOverText = document.getElementById('game-over');
+
+        let ballSpeedX = 6;
+        let ballSpeedY = 3;
+        let paddleSpeed = 20;
+        let isPongGameOver = false;
+
+        function movePaddle(direction) {
+            if (isPongGameOver) return;
+
+            const newTop = player1.offsetTop + direction * paddleSpeed;
+
+            if (newTop >= 0 && newTop <= 400) {
+                player1.style.top = `${newTop}px`;
+            }
+        }
+
+        function updateBall() {
+            if (isPongGameOver) return;
+
+            let ballRect = ball.getBoundingClientRect();
+            let playerRect = player1.getBoundingClientRect();
+
+            ball.style.left = `${ball.offsetLeft + ballSpeedX}px`;
+            ball.style.top = `${ball.offsetTop + ballSpeedY}px`;
+
+            if (ball.offsetTop <= 0 || ball.offsetTop >= 460) {
+                ballSpeedY *= -1;
+            }
+
+            if (
+                ballRect.left <= playerRect.right &&
+                ballRect.right >= playerRect.left &&
+                ballRect.top <= playerRect.bottom &&
+                ballRect.bottom >= playerRect.top
+            ) {
+                ballSpeedX *= -1;
+                ball.style.left = `${playerRect.right}px`;
+            }
+
+            if (ball.offsetLeft <= 0) {
+                gameOverText.style.display = 'block';
+                isPongGameOver = true;
+            }
+
+            if (ball.offsetLeft >= 620) {
+                ballSpeedX *= -1;
+            }
+
+            requestAnimationFrame(updateBall);
+        }
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'w') movePaddle(-1);
+            if (e.key === 's') movePaddle(1);
+        });
+
+        function changePaddleColor() {
+            const color = document.getElementById('color-select').value;
+            if (color === 'rainbow') {
+                player1.style.background = 'linear-gradient(to right, red, orange, yellow, green, blue, indigo, violet)';
+            } else {
+                player1.style.background = color;
+            }
+        }
+
+        function startPongGame() {
+            document.getElementById('pong-game').style.display = 'block';
+            document.getElementById('chase-game').style.display = 'none';
+            player1.style.top = '200px';
+            ball.style.left = '310px';
+            ball.style.top = '230px';
+            gameOverText.style.display = 'none';
+            isPongGameOver = false;
+            requestAnimationFrame(updateBall);
+        }
+
+        // Chase Game
+        const chasePlayer = document.getElementById('player');
+        const npc = document.getElementById('npc');
+        const gameOverChaseText = document.getElementById('game-over-chase');
+
+        let isChaseGameOver = false;
+
+        function startChaseGame() {
+            document.getElementById('pong-game').style.display = 'none';
+            document.getElementById('chase-game').style.display = 'block';
+            chasePlayer.style.left = '10px';
+            chasePlayer.style.top = '240px'; // Start position for the player
+            npc.style.left = '300px'; // Start position for the NPC
+            npc.style.top = '240px'; // Start position for the NPC
+            gameOverChaseText.style.display = 'none';
+            isChaseGameOver = false;
+
+            document.addEventListener('keydown', moveChasePlayer);
+            requestAnimationFrame(updateChase);
+        }
+
+        function moveChasePlayer(e) {
+            if (isChaseGameOver) return;
+
+            const playerRect = chasePlayer.getBoundingClientRect();
+            const gameRect = document.getElementById('chase-game').getBoundingClientRect();
+            const speed = 10; // Speed for the player
+
+            switch (e.key) {
+                case 'ArrowUp':
+                    if (playerRect.top > gameRect.top) {
+                        chasePlayer.style.top = `${chasePlayer.offsetTop - speed}px`;
+                    }
+                    break;
+                case 'ArrowDown':
+                    if (playerRect.bottom < gameRect.bottom) {
+                        chasePlayer.style.top = `${chasePlayer.offsetTop + speed}px`;
+                    }
+                    break;
+                case 'ArrowLeft':
+                    if (playerRect.left > gameRect.left) {
+                        chasePlayer.style.left = `${chasePlayer.offsetLeft - speed}px`;
+                    }
+                    break;
+                case 'ArrowRight':
+                    if (playerRect.right < gameRect.right) {
+                        chasePlayer.style.left = `${chasePlayer.offsetLeft + speed}px`;
+                    }
+                    break;
+            }
+        }
+
+        function updateChase() {
+            if (isChaseGameOver) return;
+
+            const playerRect = chasePlayer.getBoundingClientRect();
+            const npcRect = npc.getBoundingClientRect();
+
+            // Smarter AI for NPC: Predict player movement
+            const playerCenterX = playerRect.left + playerRect.width / 2;
+            const playerCenterY = playerRect.top + playerRect.height / 2;
+            const npcCenterX = npcRect.left + npcRect.width / 2;
+            const npcCenterY = npcRect.top + npcRect.height / 2;
+
+            const directionX = playerCenterX - npcCenterX;
+            const directionY = playerCenterY - npcCenterY;
+
+            // Normalize the direction
+            const length = Math.sqrt(directionX * directionX + directionY * directionY);
+            const moveSpeed = 2; // Speed of the NPC
+
+            if (length > 0) {
+                npc.style.left = `${npc.offsetLeft + (directionX / length) * moveSpeed}px`;
+                npc.style.top = `${npc.offsetTop + (directionY / length) * moveSpeed}px`;
+            }
+
+            // Check for collision
+            if (
+                playerRect.left < npcRect.right &&
+                playerRect.right > npcRect.left &&
+                playerRect.top < npcRect.bottom &&
+                playerRect.bottom > npcRect.top
+            ) {
+                gameOverChaseText.style.display = 'block';
+                isChaseGameOver = true;
+                document.removeEventListener('keydown', moveChasePlayer); // Stop player movement
+            }
+
+            requestAnimationFrame(updateChase);
+        }
+    </script>
+</body>
+</html>
